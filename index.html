@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animación Reverse Linked List</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: white;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .explanation {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .primary-btn {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      color: white;
+      box-shadow: 0 4px 15px 0 rgba(255, 107, 107, 0.3);
+    }
+
+    .secondary-btn {
+      background: linear-gradient(45deg, #4ecdc4, #44a08d);
+      color: white;
+      box-shadow: 0 4px 15px 0 rgba(78, 205, 196, 0.3);
+    }
+
+    canvas {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Reverse Linked List - Animación Interactiva</h1>
+    <div class="controls">
+      <button class="primary-btn" onclick="startIterativeReverse()">Reverse Iterativo</button>
+      <button class="secondary-btn" onclick="resetAnimation()">Reset</button>
+    </div>
+    <canvas id="canvas" width="1000" height="400"></canvas>
+    <div class="explanation" id="stepInfo">Paso 0: Lista inicial - Complejidad O(n) tiempo, O(1) espacio</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const stepInfo = document.getElementById('stepInfo');
+
+    let animationSpeed = 1000;
+    let originalList = [1, 2, 3, 4, 5];
+    let nodes = [];
+    const nodeRadius = 25;
+    const nodeSpacing = 120;
+    const startX = 100;
+    const startY = 200;
+    let pointerPositions = {};
+
+    let currentStep = 0;
+    const steps = [];
+
+    function resetAnimation() {
+      nodes = originalList.map((value, index) => ({
+        value,
+        x: startX + index * nodeSpacing,
+        y: startY,
+        next: index + 1 < originalList.length ? index + 1 : null
+      }));
+      pointerPositions = {};
+      currentStep = 0;
+      generateSteps();
+      drawList(steps[0].pointers);
+      stepInfo.textContent = steps[0].desc;
+    }
+
+    function generateSteps() {
+      steps.length = 0;
+      let prev = null;
+      let curr = 0;
+      let next = nodes[curr].next;
+
+      steps.push({ desc: `Paso 0: Inicio - prev=null, curr=head (${nodes[curr].value})`, pointers: { prev, curr, next } });
+
+      while (curr !== null) {
+        steps.push({ desc: `Paso: Guardamos next (${next !== null ? nodes[next].value : 'null'})`, pointers: { prev, curr, next } });
+        steps.push({ desc: `Paso: current.next = prev (${prev !== null ? nodes[prev].value : 'null'})`, pointers: { prev, curr, next } });
+
+        let temp = nodes[curr].next;
+        nodes[curr].next = prev;
+
+        prev = curr;
+        curr = temp;
+        next = curr !== null ? nodes[curr].next : null;
+
+        steps.push({ desc: `Paso: Avanzamos prev y curr`, pointers: { prev, curr, next } });
+      }
+
+      steps.push({ desc: `Fin: Lista reversada. Head es ${prev !== null ? nodes[prev].value : 'null'}`, pointers: {} });
+    }
+
+    function drawArrow(fromX, fromY, toX, toY) {
+      const headlen = 10;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+      const startX = fromX + nodeRadius * Math.cos(angle);
+      const startY = fromY + nodeRadius * Math.sin(angle);
+      const endX = toX - nodeRadius * Math.cos(angle);
+      const endY = toY - nodeRadius * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - headlen * Math.cos(angle - Math.PI / 6), endY - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(endX - headlen * Math.cos(angle + Math.PI / 6), endY - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.lineTo(endX, endY);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+    }
+
+    function drawList(pointers = {}) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      nodes.forEach((node, index) => {
+        const { x, y, next } = node;
+        if (next !== null) {
+          const target = nodes[next];
+          drawArrow(x, y, target.x, target.y);
+        }
+      });
+
+      nodes.forEach((node, index) => {
+        const { x, y, value } = node;
+        ctx.beginPath();
+        ctx.arc(x, y, nodeRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = '#4ecdc4';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(value, x, y);
+      });
+
+      const colors = {
+        prev: '#feca57',
+        curr: '#ff6b6b',
+        next: '#1dd1a1'
+      };
+
+      for (const [label, index] of Object.entries(pointers)) {
+        if (index !== null && nodes[index]) {
+          const { x, y } = nodes[index];
+          const px = pointerPositions[label] ? pointerPositions[label].x : x;
+          const py = pointerPositions[label] ? pointerPositions[label].y : y - 50;
+
+          pointerPositions[label] = {
+            x: px + (x - px) * 0.3,
+            y: py + ((y - 50) - py) * 0.3
+          };
+
+          ctx.fillStyle = colors[label] || 'white';
+          ctx.beginPath();
+          ctx.moveTo(pointerPositions[label].x, pointerPositions[label].y);
+          ctx.lineTo(pointerPositions[label].x - 10, pointerPositions[label].y + 15);
+          ctx.lineTo(pointerPositions[label].x + 10, pointerPositions[label].y + 15);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = colors[label] || 'white';
+          ctx.font = 'bold 14px Arial';
+          ctx.fillText(label.toUpperCase(), pointerPositions[label].x, pointerPositions[label].y - 10);
+        }
+      }
+    }
+
+    async function startIterativeReverse() {
+      resetAnimation();
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        drawList(step.pointers);
+        stepInfo.textContent = step.desc;
+        await sleep(animationSpeed);
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    resetAnimation();
+  </script>
+</body>
+</html>
